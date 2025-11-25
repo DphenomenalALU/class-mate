@@ -12,6 +12,7 @@ import { useLocalMicrophone } from "@/app/components/cvi/hooks/use-local-microph
 import { useLocalCamera } from "@/app/components/cvi/hooks/use-local-camera"
 import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permissions"
 import { supabaseClient } from "@/lib/supabase-client"
+import { useAuth } from "@/hooks/use-auth"
 
 function SessionContent() {
   const router = useRouter()
@@ -21,10 +22,12 @@ function SessionContent() {
   const [isStarting, setIsStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [assistantId, setAssistantId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   const { isMicMuted, onToggleMicrophone } = useLocalMicrophone()
   const { isCamMuted, onToggleCamera } = useLocalCamera()
   const { requestPermissions } = useBrowserMediaPermissions()
+  const { currentUser } = useAuth()
 
   const isMicOn = !isMicMuted
   const isVideoOn = !isCamMuted
@@ -47,6 +50,32 @@ function SessionContent() {
 
     loadAssistant()
   }, [params?.id])
+
+  useEffect(() => {
+    async function ensureSession() {
+      if (!assistantId || !currentUser?.user?.id || sessionId) return
+
+      const { data, error } = await supabaseClient
+        .from("sessions")
+        .insert({
+          assistant_id: assistantId,
+          student_id: currentUser.user.id,
+          status: "active",
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Failed to create session record:", error)
+        return
+      }
+
+      setSessionId((data as { id: string }).id)
+    }
+
+    ensureSession()
+  }, [assistantId, currentUser, sessionId])
 
   useEffect(() => {
     if (conversationUrl) {
@@ -83,6 +112,20 @@ function SessionContent() {
   }
 
   function handleEndSession() {
+    if (sessionId) {
+      supabaseClient
+        .from("sessions")
+        .update({
+          status: "completed",
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", sessionId)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Failed to update session record:", error)
+          }
+        })
+    }
     if (isMicOn) onToggleMicrophone()
     if (isVideoOn) onToggleCamera()
     setConversationUrl(null)

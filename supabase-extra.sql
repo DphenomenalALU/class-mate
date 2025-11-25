@@ -6,6 +6,12 @@ alter table public.assistants
   add column if not exists system_prompt text,
   add column if not exists context text;
 
+-- 2) Allow students to insert their own sessions
+drop policy if exists "Students can insert their sessions" on public.sessions;
+
+create policy "Students can insert their sessions"
+  on public.sessions for insert
+  with check (auth.uid() = student_id);
+
 -- 2) (Optional) You can create a public storage bucket named `course-materials`
 -- from the Supabase Storage UI. Tavus will fetch documents from this bucket.
-
