@@ -1,7 +1,9 @@
 import type React from "react"
 import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { GraduationCap, LayoutDashboard, Bot, BookOpen, FileText, BarChart3, AlertTriangle, LogOut } from "lucide-react"
+import { UserGate } from "@/components/auth/UserGate"
 
 export default function DashboardLayout({
   children,
@@ -78,7 +80,9 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container py-6 md:py-10">{children}</div>
+        <UserGate allowRoles={["facilitator"]}>
+          <div className="container py-6 md:py-10">{children}</div>
+        </UserGate>
       </main>
     </div>
   )

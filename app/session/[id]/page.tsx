@@ -11,6 +11,7 @@ import { Conversation } from "@/app/components/cvi/components/conversation"
 import { useLocalMicrophone } from "@/app/components/cvi/hooks/use-local-microphone"
 import { useLocalCamera } from "@/app/components/cvi/hooks/use-local-camera"
 import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permissions"
+import { supabaseClient } from "@/lib/supabase-client"
 
 function SessionContent() {
   const router = useRouter()
@@ -19,6 +20,7 @@ function SessionContent() {
   const [conversationUrl, setConversationUrl] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [assistantId, setAssistantId] = useState<string | null>(null)
 
   const { isMicMuted, onToggleMicrophone } = useLocalMicrophone()
   const { isCamMuted, onToggleCamera } = useLocalCamera()
@@ -26,6 +28,25 @@ function SessionContent() {
 
   const isMicOn = !isMicMuted
   const isVideoOn = !isCamMuted
+
+  useEffect(() => {
+    async function loadAssistant() {
+      if (!params?.id) return
+      const { data, error } = await supabaseClient
+        .from("session_queue_local")
+        .select("assistant_id")
+        .eq("id", params.id)
+        .single()
+
+      if (error) {
+        console.error("Failed to load assistant for session:", error)
+        return
+      }
+      setAssistantId((data as { assistant_id: string }).assistant_id)
+    }
+
+    loadAssistant()
+  }, [params?.id])
 
   useEffect(() => {
     if (conversationUrl) {
@@ -42,7 +63,9 @@ function SessionContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          assistantId: assistantId || undefined,
+        }),
       })
 
       if (!response.ok) {
