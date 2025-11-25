@@ -189,4 +189,3 @@ create policy "Facilitators can manage escalations for their assistants"
       and p.role = 'facilitator'
     )
   );
-

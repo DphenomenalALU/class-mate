@@ -1,24 +1,53 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Clock, Users2, ArrowLeft } from "lucide-react"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Users2, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useState, useEffect } from "react"
 
 export default function QueuePage() {
-  const [position, setPosition] = useState(3)
-  const [estimatedWait, setEstimatedWait] = useState(15)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const initialPosition = Number(searchParams.get("position") || "1")
+  const queueId = searchParams.get("queueId") || ""
 
-  // Simulate queue movement
+  const [position, setPosition] = useState(initialPosition)
+  const [estimatedWait, setEstimatedWait] = useState(initialPosition * 5)
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => Math.max(1, prev - 1))
-      setEstimatedWait((prev) => Math.max(5, prev - 5))
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [])
+    let cancelled = false
+
+    async function pollStatus() {
+      if (!queueId) return
+      try {
+        const response = await fetch(`/api/queue/status?id=${queueId}`)
+        if (!response.ok) return
+        const data = await response.json()
+
+        if (cancelled) return
+
+        setPosition(data.position)
+        setEstimatedWait(Math.max(5, data.position * 5))
+
+        if (data.status === "active") {
+          router.push(`/session/${queueId}`)
+        }
+      } catch (error) {
+        console.error("Error polling queue status:", error)
+      }
+    }
+
+    pollStatus()
+    const interval = setInterval(pollStatus, 10000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [queueId, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">

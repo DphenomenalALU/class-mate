@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permission
 
 function SessionContent() {
   const router = useRouter()
+  const params = useParams<{ id: string }>()
   const [showEscalation, setShowEscalation] = useState(false)
   const [conversationUrl, setConversationUrl] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
@@ -66,6 +67,17 @@ function SessionContent() {
 
   function handleHangUp() {
     handleEndSession()
+    if (params?.id) {
+      fetch("/api/queue/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ queueId: params.id }),
+      }).catch((error) => {
+        console.error("Failed to complete queue entry:", error)
+      })
+    }
     router.push("/student")
   }
 

@@ -1,10 +1,53 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Video, ArrowRight, Bot } from "lucide-react"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Bot } from "lucide-react"
-import Link from "next/link"
+import { useStudentId } from "@/hooks/use-student-id"
 
 export default function StudentDashboard() {
+  const router = useRouter()
+  const studentId = useStudentId()
+
+  async function handleConnect(assistantId?: string) {
+    if (!studentId) return
+
+    try {
+      const response = await fetch("/api/queue/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId: assistantId || undefined,
+          studentClientId: studentId,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error("Failed to request session")
+        return
+      }
+
+      const data = await response.json()
+
+      if (data.status === "active") {
+        router.push(`/session/${data.queueId}`)
+      } else {
+        const params = new URLSearchParams({
+          queueId: data.queueId,
+          position: String(data.position),
+        })
+        router.push(`/student/queue?${params.toString()}`)
+      }
+    } catch (error) {
+      console.error("Error requesting session:", error)
+    }
+  }
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -49,11 +92,13 @@ export default function StudentDashboard() {
             </div>
           </CardContent>
           <CardFooter>
-            <Link href="/session/123" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto gap-2">
-                Start Session <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto gap-2"
+              onClick={() => handleConnect(process.env.NEXT_PUBLIC_CS101_ASSISTANT_ID)}
+            >
+              Start Session <ArrowRight className="h-4 w-4" />
+            </Button>
           </CardFooter>
         </Card>
 
@@ -109,12 +154,14 @@ export default function StudentDashboard() {
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/session/cs101" className="w-full">
-                <Button variant="secondary" className="w-full gap-2">
-                  <Video className="h-4 w-4" />
-                  Connect Now
-                </Button>
-              </Link>
+              <Button
+                variant="secondary"
+                className="w-full gap-2"
+                onClick={() => handleConnect(process.env.NEXT_PUBLIC_CS101_ASSISTANT_ID)}
+              >
+                <Video className="h-4 w-4" />
+                Connect Now
+              </Button>
             </CardFooter>
           </Card>
 
@@ -143,12 +190,14 @@ export default function StudentDashboard() {
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/session/math201" className="w-full">
-                <Button variant="secondary" className="w-full gap-2">
-                  <Video className="h-4 w-4" />
-                  Connect Now
-                </Button>
-              </Link>
+              <Button
+                variant="secondary"
+                className="w-full gap-2"
+                onClick={() => handleConnect()}
+              >
+                <Video className="h-4 w-4" />
+                Connect Now
+              </Button>
             </CardFooter>
           </Card>
 
@@ -177,12 +226,14 @@ export default function StudentDashboard() {
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/session/physics101" className="w-full">
-                <Button variant="secondary" className="w-full gap-2">
-                  <Video className="h-4 w-4" />
-                  Connect Now
-                </Button>
-              </Link>
+              <Button
+                variant="secondary"
+                className="w-full gap-2"
+                onClick={() => handleConnect()}
+              >
+                <Video className="h-4 w-4" />
+                Connect Now
+              </Button>
             </CardFooter>
           </Card>
         </div>

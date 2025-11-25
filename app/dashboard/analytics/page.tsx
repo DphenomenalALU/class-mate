@@ -1,7 +1,86 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
 import { BarChart3, TrendingUp, Clock, CheckCircle2 } from "lucide-react"
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { supabaseClient } from "@/lib/supabase-client"
+
+type Session = {
+  id: string
+  assistant_id: string
+  status: "queued" | "active" | "completed" | "escalated"
+  rating: number | null
+}
+
+type Assistant = {
+  id: string
+  course_code: string
+  name: string
+}
+
 export default function AnalyticsPage() {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [assistants, setAssistants] = useState<Assistant[]>([])
+
+  useEffect(() => {
+    async function loadData() {
+      const { data: sessionsData } = await supabaseClient
+        .from("sessions")
+        .select("id, assistant_id, status, rating")
+
+      const { data: assistantsData } = await supabaseClient
+        .from("assistants")
+        .select("id, course_code, name")
+
+      setSessions((sessionsData || []) as Session[])
+      setAssistants((assistantsData || []) as Assistant[])
+    }
+
+    loadData()
+  }, [])
+
+  const stats = useMemo(() => {
+    const totalSessions = sessions.length
+    const completed = sessions.filter((s) => s.status === "completed").length
+    const escalated = sessions.filter((s) => s.status === "escalated").length
+    const resolvedWithoutEscalation =
+      totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0
+
+    const ratings = sessions.map((s) => s.rating).filter((r): r is number => typeof r === "number")
+    const avgRating =
+      ratings.length > 0 ? (ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(1) : "–"
+
+    return {
+      totalSessions,
+      resolvedWithoutEscalation,
+      avgRating,
+      ratingsCount: ratings.length,
+      escalated,
+    }
+  }, [sessions])
+
+  const sessionsByAssistant = useMemo(() => {
+    const map = new Map<
+      string,
+      { assistant: Assistant; count: number }
+    >()
+
+    for (const s of sessions) {
+      const assistant = assistants.find((a) => a.id === s.assistant_id)
+      if (!assistant) continue
+      const key = assistant.id
+      const current = map.get(key)
+      if (current) {
+        current.count += 1
+      } else {
+        map.set(key, { assistant, count: 1 })
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count)
+  }, [sessions, assistants])
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -18,10 +97,8 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">↑ 14%</span> from last week
-            </p>
+            <div className="text-2xl font-bold">{stats.totalSessions}</div>
+            <p className="text-xs text-muted-foreground">Across all assistants</p>
           </CardContent>
         </Card>
         <Card>
@@ -30,10 +107,8 @@ export default function AnalyticsPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">38 min</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">↑ 5%</span> from last week
-            </p>
+            <div className="text-2xl font-bold">–</div>
+            <p className="text-xs text-muted-foreground">Duration tracking not implemented yet</p>
           </CardContent>
         </Card>
         <Card>
@@ -42,8 +117,8 @@ export default function AnalyticsPage() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">62%</div>
-            <p className="text-xs text-muted-foreground">Questions resolved without escalation</p>
+            <div className="text-2xl font-bold">{stats.resolvedWithoutEscalation}%</div>
+            <p className="text-xs text-muted-foreground">Completed sessions without escalation</p>
           </CardContent>
         </Card>
         <Card>
@@ -52,8 +127,10 @@ export default function AnalyticsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2 / 5.0</div>
-            <p className="text-xs text-muted-foreground">Based on 56 ratings</p>
+            <div className="text-2xl font-bold">
+              {stats.avgRating} {stats.avgRating !== "–" && "/ 5.0"}
+            </div>
+            <p className="text-xs text-muted-foreground">Based on {stats.ratingsCount} ratings</p>
           </CardContent>
         </Card>
       </div>
@@ -61,83 +138,35 @@ export default function AnalyticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Session Activity by Course</CardTitle>
-          <CardDescription>Total sessions per course assistant over the last 30 days</CardDescription>
+          <CardDescription>Total sessions per course assistant</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { course: "CS101 - Intro to Programming", assistant: "Dr. Chen", sessions: 87, color: "bg-blue-500" },
-              { course: "Math 201 - Calculus I", assistant: "Prof. Smith", sessions: 65, color: "bg-green-500" },
-              { course: "Physics 101 - Mechanics", assistant: "Prof. Okafor", sessions: 42, color: "bg-purple-500" },
-              { course: "Chem 101 - General Chemistry", assistant: "Dr. Patel", sessions: 28, color: "bg-orange-500" },
-            ].map((item, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium">{item.course}</p>
-                    <p className="text-xs text-muted-foreground">{item.assistant}</p>
+            {sessionsByAssistant.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No sessions yet.</p>
+            ) : (
+              sessionsByAssistant.map(({ assistant, count }) => (
+                <div key={assistant.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-medium">
+                        {assistant.course_code} – {assistant.name}
+                      </p>
+                    </div>
+                    <span className="font-bold">{count}</span>
                   </div>
-                  <span className="font-bold">{item.sessions}</span>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${Math.min((count / (stats.totalSessions || 1)) * 100, 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`${item.color} h-2 rounded-full`}
-                    style={{ width: `${(item.sessions / 100) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Most Common Questions</CardTitle>
-            <CardDescription>Topics students ask about most frequently</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { topic: "Binary search trees", count: 24 },
-                { topic: "Derivatives and integrals", count: 19 },
-                { topic: "Newton's laws", count: 16 },
-                { topic: "For loops in Python", count: 14 },
-                { topic: "Quadratic equations", count: 12 },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm">{item.topic}</span>
-                  <span className="text-sm font-medium text-muted-foreground">{item.count} times</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Peak Usage Times</CardTitle>
-            <CardDescription>When students connect with assistants most</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                { time: "6:00 PM - 8:00 PM", sessions: 42 },
-                { time: "2:00 PM - 4:00 PM", sessions: 35 },
-                { time: "8:00 PM - 10:00 PM", sessions: 28 },
-                { time: "12:00 PM - 2:00 PM", sessions: 18 },
-                { time: "10:00 AM - 12:00 PM", sessions: 12 },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm">{item.time}</span>
-                  <span className="text-sm font-medium text-muted-foreground">{item.sessions} sessions</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }
