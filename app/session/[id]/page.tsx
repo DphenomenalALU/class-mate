@@ -1,15 +1,73 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mic, MicOff, Video, VideoOff, PhoneOff, AlertCircle } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+import { CVIProvider } from "@/app/components/cvi/components/cvi-provider"
+import { Conversation } from "@/app/components/cvi/components/conversation"
+import { useLocalMicrophone } from "@/app/components/cvi/hooks/use-local-microphone"
+import { useLocalCamera } from "@/app/components/cvi/hooks/use-local-camera"
+import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permissions"
 
-export default function SessionPage() {
-  const [isMicOn, setIsMicOn] = useState(true)
-  const [isVideoOn, setIsVideoOn] = useState(true)
+function SessionContent() {
+  const router = useRouter()
   const [showEscalation, setShowEscalation] = useState(false)
+  const [conversationUrl, setConversationUrl] = useState<string | null>(null)
+  const [isStarting, setIsStarting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const { isMicMuted, onToggleMicrophone } = useLocalMicrophone()
+  const { isCamMuted, onToggleCamera } = useLocalCamera()
+  const { requestPermissions } = useBrowserMediaPermissions()
+
+  const isMicOn = !isMicMuted
+  const isVideoOn = !isCamMuted
+
+  useEffect(() => {
+    if (conversationUrl) {
+      requestPermissions()
+    }
+  }, [conversationUrl, requestPermissions])
+
+  async function handleStartConversation() {
+    try {
+      setIsStarting(true)
+      setError(null)
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to start conversation")
+      }
+
+      const data = await response.json()
+      setConversationUrl(data.conversation_url)
+    } catch (err) {
+      setError("Could not start the AI video session. Please try again.")
+      console.error(err)
+    } finally {
+      setIsStarting(false)
+    }
+  }
+
+  function handleEndSession() {
+    if (isMicOn) onToggleMicrophone()
+    if (isVideoOn) onToggleCamera()
+    setConversationUrl(null)
+  }
+
+  function handleHangUp() {
+    handleEndSession()
+    router.push("/student")
+  }
 
   return (
     <div className="fixed inset-0 bg-zinc-950 flex flex-col text-white overflow-hidden">
@@ -24,25 +82,29 @@ export default function SessionPage() {
 
       {/* Main Video Area (AI Assistant) */}
       <div className="flex-1 relative flex items-center justify-center bg-zinc-900">
-        {/* Placeholder for AI Video Stream */}
-        <div className="text-center opacity-30">
-          <div className="h-32 w-32 rounded-full bg-zinc-800 mx-auto mb-4 flex items-center justify-center text-5xl">
-            👩‍💻
+        {!conversationUrl ? (
+          <div className="text-center opacity-90 space-y-4">
+            <div className="h-32 w-32 rounded-full bg-zinc-800 mx-auto mb-2 flex items-center justify-center text-5xl">
+              👩‍💻
+            </div>
+            <p className="text-xl font-medium">Ready to start your AI session?</p>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto">
+              When you start, ClassMate will open a real-time video session with your course assistant powered by Tavus CVI.
+            </p>
+            <div className="mt-4">
+              <Button size="lg" onClick={handleStartConversation} disabled={isStarting}>
+                {isStarting ? "Starting..." : "Start AI Video Session"}
+              </Button>
+            </div>
+            {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
           </div>
-          <p className="text-xl font-medium">Dr. Chen is speaking...</p>
-        </div>
-
-        {/* Transcript Overlay */}
-        <div className="absolute bottom-32 left-0 right-0 px-8 text-center">
-          <span className="inline-block bg-black/60 backdrop-blur-md px-6 py-3 rounded-xl text-lg font-medium">
-            "Let's walk through how loops work in Python. Can you show me your code?"
-          </span>
-        </div>
-
-        {isVideoOn && (
-          <div className="absolute bottom-32 right-6 w-48 h-36 bg-zinc-800 rounded-xl border border-zinc-700 shadow-2xl overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center bg-zinc-700">
-              <span className="text-xs text-zinc-400">You</span>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full max-w-5xl mx-auto">
+              <Conversation
+                conversationUrl={conversationUrl}
+                onLeave={handleEndSession}
+              />
             </div>
           </div>
         )}
@@ -74,25 +136,32 @@ export default function SessionPage() {
         <Button
           variant="secondary"
           size="icon"
-          className={`h-12 w-12 rounded-full ${isMicOn ? "bg-zinc-800 hover:bg-zinc-700" : "bg-destructive hover:bg-destructive/90"} text-white border-0`}
-          onClick={() => setIsMicOn(!isMicOn)}
+          className={`h-12 w-12 rounded-full ${
+            isMicOn ? "bg-zinc-800 hover:bg-zinc-700" : "bg-destructive hover:bg-destructive/90"
+          } text-white border-0`}
+          onClick={onToggleMicrophone}
         >
           {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
         </Button>
         <Button
           variant="secondary"
           size="icon"
-          className={`h-12 w-12 rounded-full ${isVideoOn ? "bg-zinc-800 hover:bg-zinc-700" : "bg-destructive hover:bg-destructive/90"} text-white border-0`}
-          onClick={() => setIsVideoOn(!isVideoOn)}
+          className={`h-12 w-12 rounded-full ${
+            isVideoOn ? "bg-zinc-800 hover:bg-zinc-700" : "bg-destructive hover:bg-destructive/90"
+          } text-white border-0`}
+          onClick={onToggleCamera}
         >
           {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
         </Button>
 
-        <Link href="/student">
-          <Button variant="destructive" size="icon" className="h-12 w-16 rounded-full px-8 mx-4">
-            <PhoneOff className="h-6 w-6" />
-          </Button>
-        </Link>
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-12 w-16 rounded-full px-8 mx-4"
+          onClick={handleHangUp}
+        >
+          <PhoneOff className="h-6 w-6" />
+        </Button>
 
         <Button
           variant="secondary"
@@ -114,5 +183,13 @@ export default function SessionPage() {
         </Badge>
       </div>
     </div>
+  )
+}
+
+export default function SessionPage() {
+  return (
+    <CVIProvider>
+      <SessionContent />
+    </CVIProvider>
   )
 }
