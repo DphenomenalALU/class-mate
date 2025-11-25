@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { supabaseClient } from "@/lib/supabase-client"
 import { useAuth } from "@/hooks/use-auth"
 
-export function RoleSelector() {
+export function RoleSelector({ next }: { next?: string }) {
   const { currentUser, loading } = useAuth()
   const [saving, setSaving] = useState<"student" | "facilitator" | null>(null)
 
@@ -29,8 +29,9 @@ export function RoleSelector() {
             onConflict: "id",
           },
         )
-      // After role is set, reload so useAuth picks up the new role
-      window.location.href = role === "facilitator" ? "/dashboard" : "/student"
+      // After role is set, go to the intended destination (or a role-based default)
+      const fallback = role === "facilitator" ? "/dashboard" : "/student"
+      window.location.href = next || fallback
     } finally {
       setSaving(null)
     }
@@ -63,4 +64,3 @@ export function RoleSelector() {
     </div>
   )
 }
-

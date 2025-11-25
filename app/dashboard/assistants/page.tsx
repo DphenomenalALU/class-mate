@@ -146,25 +146,26 @@ export default function AssistantsPage() {
       setIsSaving(true)
       setError(null)
 
-      const { data, error } = await supabaseClient
-        .from("assistants")
-        .insert({
-          course_code: courseCode,
-          name: courseName,
-          tavus_persona_id: stock.personaId,
-          tavus_replica_id: stock.replicaId,
-          is_active: true,
-        })
-        .select()
-        .single()
+      const response = await fetch("/api/assistants/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          courseCode,
+          courseName,
+          personaId: stock.personaId,
+          replicaId: stock.replicaId,
+        }),
+      })
 
-      if (error) {
-        console.error("Error creating assistant:", error)
+      if (!response.ok) {
         setError("Failed to create assistant")
         return
       }
 
-      setAssistants((prev) => [data as Assistant, ...prev])
+      const data = await response.json()
+      setAssistants((prev) => [data.assistant as Assistant, ...prev])
       setShowCreateForm(false)
       setCourseCode("")
       setCourseName("")

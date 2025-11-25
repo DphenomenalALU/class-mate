@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { supabaseClient } from "@/lib/supabase-client"
@@ -10,18 +10,21 @@ import { RoleSelector } from "@/components/auth/RoleSelector"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { currentUser, loading } = useAuth()
 
   useEffect(() => {
+    const next = searchParams.get("next") || "/student"
     if (!loading && currentUser && currentUser.role) {
-      router.push("/student")
+      router.push(next)
     }
-  }, [currentUser, loading, router])
+  }, [currentUser, loading, router, searchParams])
 
   async function handleSignInWithGoogle() {
+    const next = searchParams.get("next") || "/student"
     const redirectTo =
       typeof window !== "undefined"
-        ? `${window.location.origin}/login`
+        ? `${window.location.origin}/login?next=${encodeURIComponent(next)}`
         : undefined
 
     await supabaseClient.auth.signInWithOAuth({
@@ -48,7 +51,7 @@ export default function LoginPage() {
     if (!currentUser.role) {
       return (
         <div className="flex min-h-screen items-center justify-center">
-          <RoleSelector />
+          <RoleSelector next={searchParams.get("next") || undefined} />
         </div>
       )
     }
