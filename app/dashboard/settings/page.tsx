@@ -74,7 +74,17 @@ export default function SettingsPage() {
         return
       }
 
-      setSuccess("Settings saved. New keys will be used for future calls.")
+      await fetch("/api/facilitators/sync-assistants", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: currentUser.user.id }),
+      }).catch((err) => {
+        console.warn("Failed to resync assistants:", err)
+      })
+
+      setSuccess("Settings saved. Existing assistants have been resynced with your new keys.")
     } finally {
       setSaving(false)
     }
@@ -191,4 +201,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

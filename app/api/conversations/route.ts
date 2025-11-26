@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { createTavusConversation } from "@/lib/tavus"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { getFacilitatorSettings } from "@/lib/facilitator-settings"
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
     let replicaId = process.env.TAVUS_DEFAULT_REPLICA_ID || "rfb51183fe"
     let personaId = process.env.TAVUS_DEFAULT_PERSONA_ID || "p88964a7"
     let documentIds: string[] = []
+    let apiKeyOverride: string | null = null
 
     if (assistantId) {
       const { data: assistant, error: assistantError } = await supabaseAdmin
@@ -23,6 +25,9 @@ export async function POST(request: Request) {
       if (!assistantError && assistant) {
         replicaId = assistant.tavus_replica_id || replicaId
         personaId = assistant.tavus_persona_id || personaId
+
+        const settings = await getFacilitatorSettings(assistant.created_by ?? null)
+        apiKeyOverride = settings?.tavus_api_key ?? null
       }
 
       const { data: docs, error: docsError } = await supabaseAdmin
@@ -39,6 +44,7 @@ export async function POST(request: Request) {
       replicaId,
       personaId,
       documentIds,
+      apiKeyOverride,
     })
 
     return NextResponse.json(
@@ -56,4 +62,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
