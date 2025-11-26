@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { createTavusDocument } from "@/lib/tavus"
+import { getFacilitatorSettings } from "@/lib/facilitator-settings"
 
 const BUCKET = "course-materials"
 
@@ -34,10 +35,23 @@ export async function POST(request: Request) {
     }
 
     // Create Tavus knowledge base document
+    const { data: assistant, error: assistantError } = await supabaseAdmin
+      .from("assistants")
+      .select("created_by")
+      .eq("id", assistantId)
+      .single()
+
+    if (assistantError || !assistant) {
+      console.error("Assistant not found when creating document:", assistantError)
+    }
+
+    const settings = await getFacilitatorSettings(assistant?.created_by ?? null)
+
     const tavusDoc = await createTavusDocument({
       documentName,
       documentUrl: publicUrl,
       tags: [assistantId],
+      apiKeyOverride: settings?.tavus_api_key ?? null,
     })
 
     // Store mapping in assistant_documents
@@ -73,4 +87,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

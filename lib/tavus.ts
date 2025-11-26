@@ -2,20 +2,22 @@ const TAVUS_API_BASE = "https://tavusapi.com/v2"
 
 const TAVUS_API_KEY = process.env.TAVUS_API_KEY
 
-if (!TAVUS_API_KEY) {
-  console.warn("Missing TAVUS_API_KEY. Tavus API calls will fail until it is set.")
-}
-
 export async function createTavusConversation(params: {
   replicaId: string
   personaId: string
   documentIds?: string[]
+  apiKeyOverride?: string | null
 }) {
+  const apiKey = params.apiKeyOverride || TAVUS_API_KEY
+  if (!apiKey) {
+    throw new Error("TAVUS_API_KEY is not configured.")
+  }
+
   const response = await fetch(`${TAVUS_API_BASE}/conversations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": TAVUS_API_KEY ?? "",
+      "x-api-key": apiKey,
     },
     body: JSON.stringify({
       replica_id: params.replicaId,
@@ -39,12 +41,18 @@ export async function createTavusDocument(params: {
   documentName: string
   documentUrl: string
   tags?: string[]
+  apiKeyOverride?: string | null
 }) {
+  const apiKey = params.apiKeyOverride || TAVUS_API_KEY
+  if (!apiKey) {
+    throw new Error("TAVUS_API_KEY is not configured.")
+  }
+
   const response = await fetch(`${TAVUS_API_BASE}/documents`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": TAVUS_API_KEY ?? "",
+      "x-api-key": apiKey,
     },
     body: JSON.stringify({
       document_name: params.documentName,
@@ -68,9 +76,11 @@ export async function syncTavusPersonaForAssistant(params: {
   personaId: string
   systemPrompt?: string | null
   context?: string | null
+  apiKeyOverride?: string | null
 }) {
   if (!params.personaId) return
-  if (!TAVUS_API_KEY) return
+  const apiKey = params.apiKeyOverride || TAVUS_API_KEY
+  if (!apiKey) return
 
   const patches: Array<{ op: string; path: string; value: string }> = []
 
@@ -121,7 +131,7 @@ export async function syncTavusPersonaForAssistant(params: {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": TAVUS_API_KEY,
+      "x-api-key": apiKey,
     },
     body: JSON.stringify(patches),
   })

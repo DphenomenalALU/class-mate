@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { sendEscalationEmail } from "@/lib/email"
+import { getFacilitatorSettings } from "@/lib/facilitator-settings"
 
 export async function POST(request: Request) {
   try {
@@ -142,6 +143,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const settings = await getFacilitatorSettings(assistant.created_by ?? null)
+
     if (facilitatorEmail) {
       sendEscalationEmail({
         facilitatorEmail,
@@ -151,6 +154,9 @@ export async function POST(request: Request) {
         assistantName: assistant.name,
         courseCode: assistant.course_code,
         reason,
+      },{
+        resendApiKey: settings?.resend_api_key ?? null,
+        fromEmail: settings?.resend_from_email ?? null,
       }).catch((err) => {
         console.warn("Failed to send escalation email:", err)
       })

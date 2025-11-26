@@ -11,16 +11,27 @@ if (RESEND_API_KEY) {
   console.warn("RESEND_API_KEY is not set. Escalation emails will not be sent.")
 }
 
-export async function sendEscalationEmail(params: {
-  facilitatorEmail?: string
-  studentEmail?: string
-  studentName?: string
-  facilitatorName?: string
-  courseCode?: string
-  assistantName?: string
-  reason?: string | null
-}) {
-  if (!resend || !RESEND_FROM_EMAIL) return
+export type EmailSettings = {
+  resendApiKey?: string | null
+  fromEmail?: string | null
+}
+
+export async function sendEscalationEmail(
+  params: {
+    facilitatorEmail?: string
+    studentEmail?: string
+    studentName?: string
+    facilitatorName?: string
+    courseCode?: string
+    assistantName?: string
+    reason?: string | null
+  },
+  settings?: EmailSettings,
+) {
+  const apiKey = settings?.resendApiKey || RESEND_API_KEY
+  const fromEmail = settings?.fromEmail || RESEND_FROM_EMAIL
+
+  if (!apiKey || !fromEmail) return
 
   const facilitatorEmail = params.facilitatorEmail
   if (!facilitatorEmail) return
@@ -44,8 +55,10 @@ export async function sendEscalationEmail(params: {
     "You can review this escalation in your ClassMate dashboard and follow up with the student.",
   ].filter(Boolean)
 
+  const client = new Resend(apiKey)
+
   await resend.emails.send({
-    from: RESEND_FROM_EMAIL,
+    from: fromEmail,
     to: facilitatorEmail,
     reply_to: params.studentEmail,
     subject,

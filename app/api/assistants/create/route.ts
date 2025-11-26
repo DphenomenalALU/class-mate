@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { syncTavusPersonaForAssistant } from "@/lib/tavus"
+import { getFacilitatorSettings } from "@/lib/facilitator-settings"
 
 export async function POST(request: Request) {
   try {
@@ -62,10 +63,13 @@ It should focus on helping students understand course concepts, clarify syllabus
     }
 
     // Best-effort sync of prompt/context to Tavus persona
+    const settings = await getFacilitatorSettings(createdBy ?? null)
+
     syncTavusPersonaForAssistant({
       personaId,
       systemPrompt,
       context,
+      apiKeyOverride: settings?.tavus_api_key ?? null,
     }).catch((err) => {
       console.warn("Tavus persona sync failed:", err)
     })
