@@ -9,23 +9,16 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'ClassMate — Get Help with Your Coursework',
-  description: 'AI-powered academic support for distributed learning environments. Helping students get personalized assistance anytime, anywhere.',
+  description:
+    'AI-powered academic support for distributed learning environments. Helping students get personalized assistance anytime, anywhere.',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
+        url: '/favicon.svg',
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/favicon.svg',
   },
 }
 
