@@ -14,6 +14,8 @@ if (RESEND_API_KEY) {
 export async function sendEscalationEmail(params: {
   facilitatorEmail?: string
   studentEmail?: string
+  studentName?: string
+  facilitatorName?: string
   courseCode?: string
   assistantName?: string
   reason?: string | null
@@ -26,13 +28,20 @@ export async function sendEscalationEmail(params: {
   const subjectCourse = params.courseCode ? ` [${params.courseCode}]` : ""
   const subject = `ClassMate Escalation${subjectCourse}`
 
+  const facilitatorDisplayName = params.facilitatorName || "Facilitator"
+  const studentDisplayName = params.studentName || "Student"
+
   const bodyLines = [
+    `Hi ${facilitatorDisplayName},`,
+    "",
+    "A student has escalated a question in ClassMate.",
     params.assistantName && params.courseCode
       ? `Assistant: ${params.assistantName} (${params.courseCode})`
       : undefined,
+    `Student: ${studentDisplayName}${params.studentEmail ? ` <${params.studentEmail}>` : ""}`,
     params.reason ? `Reason: ${params.reason}` : "Reason: (not provided)",
     "",
-    "This question needs facilitator review in the ClassMate dashboard.",
+    "You can review this escalation in your ClassMate dashboard and follow up with the student.",
   ].filter(Boolean)
 
   await resend.emails.send({

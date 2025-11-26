@@ -81,7 +81,9 @@ export async function POST(request: Request) {
     }
 
     let studentEmail: string | undefined
+    let studentName: string | undefined
     let facilitatorEmail: string | undefined
+    let facilitatorName: string | undefined
     try {
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
         session.student_id,
@@ -89,6 +91,25 @@ export async function POST(request: Request) {
       studentEmail = userData?.user?.email ?? undefined
     } catch (err) {
       console.warn("Failed to load student email:", err)
+    }
+
+    try {
+      const { data: studentProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("first_name, last_name, full_name")
+        .eq("id", session.student_id)
+        .single()
+
+      if (studentProfile) {
+        studentName =
+          (studentProfile.full_name as string | undefined) ||
+          [studentProfile.first_name, studentProfile.last_name]
+            .filter(Boolean)
+            .join(" ") ||
+          undefined
+      }
+    } catch (err) {
+      console.warn("Failed to load student profile:", err)
     }
 
     if (assistant.created_by) {
@@ -100,12 +121,33 @@ export async function POST(request: Request) {
       } catch (err) {
         console.warn("Failed to load facilitator email:", err)
       }
+
+      try {
+        const { data: facilitatorProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("first_name, last_name, full_name")
+          .eq("id", assistant.created_by)
+          .single()
+
+        if (facilitatorProfile) {
+          facilitatorName =
+            (facilitatorProfile.full_name as string | undefined) ||
+            [facilitatorProfile.first_name, facilitatorProfile.last_name]
+              .filter(Boolean)
+              .join(" ") ||
+            undefined
+        }
+      } catch (err) {
+        console.warn("Failed to load facilitator profile:", err)
+      }
     }
 
     if (facilitatorEmail) {
       sendEscalationEmail({
         facilitatorEmail,
         studentEmail,
+        studentName,
+        facilitatorName,
         assistantName: assistant.name,
         courseCode: assistant.course_code,
         reason,

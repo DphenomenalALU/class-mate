@@ -14,6 +14,7 @@ import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permission
 import { supabaseClient } from "@/lib/supabase-client"
 import { useAuth } from "@/hooks/use-auth"
 import { Textarea } from "@/components/ui/textarea"
+import { useDaily } from "@daily-co/daily-react"
 
 function SessionContent() {
   const router = useRouter()
@@ -27,6 +28,10 @@ function SessionContent() {
   const [wasEscalated, setWasEscalated] = useState(false)
   const [escalationSubmitting, setEscalationSubmitting] = useState(false)
   const [escalationNote, setEscalationNote] = useState("")
+  const daily = useDaily()
+  const [showRating, setShowRating] = useState(false)
+  const [rating, setRating] = useState<number | null>(null)
+  const [ratingSubmitting, setRatingSubmitting] = useState(false)
 
   const { isMicMuted, onToggleMicrophone } = useLocalMicrophone()
   const { isCamMuted, onToggleCamera } = useLocalCamera()
@@ -86,6 +91,43 @@ function SessionContent() {
       requestPermissions()
     }
   }, [conversationUrl, requestPermissions])
+
+  useEffect(() => {
+    if (!daily) return
+
+    function handleAppMessage(event: any) {
+      const data = event?.data
+      if (!data) return
+
+      try {
+        // Generic checks for a trigger_escalation tool call
+        const toolName =
+          data.tool?.name ||
+          data.name ||
+          data.tool_name
+
+        const reason =
+          data.tool?.arguments?.reason ||
+          data.arguments?.reason ||
+          data.reason ||
+          ""
+
+        if (toolName === "trigger_escalation") {
+          if (typeof reason === "string" && reason.trim().length > 0) {
+            setEscalationNote(reason.trim())
+          }
+          setShowEscalation(true)
+        }
+      } catch (err) {
+        console.warn("Error handling CVI app message:", err)
+      }
+    }
+
+    daily.on("app-message", handleAppMessage)
+    return () => {
+      daily.off("app-message", handleAppMessage)
+    }
+  }, [daily])
 
   async function handleStartConversation() {
     try {
@@ -149,7 +191,7 @@ function SessionContent() {
         console.error("Failed to complete queue entry:", error)
       })
     }
-    router.push("/student")
+    setShowRating(true)
   }
 
   async function handleConfirmEscalation() {
@@ -185,6 +227,30 @@ function SessionContent() {
       handleHangUp()
     } finally {
       setEscalationSubmitting(false)
+    }
+  }
+
+  async function handleSubmitRating() {
+    if (!sessionId || rating == null) {
+      setShowRating(false)
+      router.push("/student")
+      return
+    }
+
+    try {
+      setRatingSubmitting(true)
+      const { error } = await supabaseClient
+        .from("sessions")
+        .update({ rating })
+        .eq("id", sessionId)
+
+      if (error) {
+        console.error("Failed to save rating:", error)
+      }
+    } finally {
+      setRatingSubmitting(false)
+      setShowRating(false)
+      router.push("/student")
     }
   }
 
@@ -261,6 +327,52 @@ function SessionContent() {
                 </Button>
                 <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowEscalation(false)}>
                   Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showRating && (
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-8 max-w-md space-y-6">
+              <h3 className="text-xl font-bold text-white text-center">Rate Your Session</h3>
+              <p className="text-sm text-zinc-300 text-center">
+                How helpful was this session with your assistant?
+              </p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRating(value)}
+                    className={`h-10 w-10 rounded-full border text-sm font-medium ${
+                      rating === value
+                        ? "bg-primary text-black border-primary"
+                        : "bg-zinc-800 border-zinc-600 text-zinc-200"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={handleSubmitRating}
+                  disabled={ratingSubmitting}
+                >
+                  {ratingSubmitting ? "Saving..." : "Submit Rating"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 bg-transparent"
+                  onClick={() => {
+                    setShowRating(false)
+                    router.push("/student")
+                  }}
+                >
+                  Skip
                 </Button>
               </div>
             </div>

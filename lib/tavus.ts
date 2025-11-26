@@ -90,7 +90,32 @@ export async function syncTavusPersonaForAssistant(params: {
     })
   }
 
-  if (patches.length === 0) return
+  // Configure LLM tool calling for trigger_escalation
+  patches.push({
+    op: "replace",
+    path: "/layers/llm/tools",
+    value: JSON.stringify([
+      {
+        type: "function",
+        function: {
+          name: "trigger_escalation",
+          description:
+            "Escalate the current question to the human facilitator when it is outside the course materials or involves grades, attendance, or disputes. Always explain this to the student before calling.",
+          parameters: {
+            type: "object",
+            properties: {
+              reason: {
+                type: "string",
+                description:
+                  "A short, student-facing explanation of why this question should be escalated, in plain language.",
+              },
+            },
+            required: ["reason"],
+          },
+        },
+      },
+    ]),
+  })
 
   const response = await fetch(`${TAVUS_API_BASE}/personas/${params.personaId}`, {
     method: "PATCH",
@@ -106,4 +131,3 @@ export async function syncTavusPersonaForAssistant(params: {
     console.warn(`Tavus persona sync warning: ${response.status} ${text}`)
   }
 }
-

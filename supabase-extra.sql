@@ -19,5 +19,11 @@ create policy "Students can insert their sessions"
   on public.sessions for insert
   with check (auth.uid() = student_id);
 
--- 2) (Optional) You can create a public storage bucket named `course-materials`
--- from the Supabase Storage UI. Tavus will fetch documents from this bucket.
+-- 3) Allow students to update their own sessions (e.g., rating)
+drop policy if exists "Students can update their sessions" on public.sessions;
+
+create policy "Students can update their sessions"
+  on public.sessions for update
+  using (auth.uid() = student_id)
+  with check (auth.uid() = student_id);
+
