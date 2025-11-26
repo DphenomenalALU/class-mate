@@ -11,7 +11,7 @@ export function SignOutButton() {
 
   async function handleSignOut() {
     await supabaseClient.auth.signOut()
-    router.push("/login")
+    router.push("/")
   }
 
   return (
@@ -26,4 +26,3 @@ export function SignOutButton() {
     </Button>
   )
 }
-

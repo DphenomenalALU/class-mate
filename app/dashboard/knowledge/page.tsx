@@ -156,15 +156,15 @@ export default function KnowledgePage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
-        <Card className="col-span-2">
-          <CardHeader className="flex items-center justify-between gap-4">
-            <div>
+        <Card className="col-span-2 overflow-hidden">
+          <CardHeader className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="min-w-0">
               <CardTitle>Uploaded Documents</CardTitle>
               <CardDescription>Documents your replica uses to answer questions.</CardDescription>
             </div>
-            <div className="w-56">
+            <div className="w-full md:w-64 md:ml-8">
               <Select value={selectedAssistantId} onValueChange={handleAssistantChange}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full max-w-full">
                   <SelectValue placeholder="Choose an assistant..." />
                 </SelectTrigger>
                 <SelectContent>

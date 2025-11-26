@@ -13,11 +13,14 @@ export function SiteHeader() {
           <span>ClassMate</span>
         </Link>
         <nav className="hidden md:flex gap-6 items-center text-sm font-medium text-muted-foreground">
-          <Link href="#features" className="hover:text-foreground transition-colors">
+          <Link href="/#features" className="hover:text-foreground transition-colors">
             Features
           </Link>
-          <Link href="#how-it-works" className="hover:text-foreground transition-colors">
+          <Link href="/#how-it-works" className="hover:text-foreground transition-colors">
             How it Works
+          </Link>
+          <Link href="/help" className="hover:text-foreground transition-colors">
+            Guide
           </Link>
         </nav>
         <div className="flex items-center gap-4">

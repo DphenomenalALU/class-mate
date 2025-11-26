@@ -115,9 +115,24 @@ export default function AssistantsPage() {
   const { currentUser } = useAuth()
 
   useEffect(() => {
+    // Try to hydrate from localStorage cache for faster initial paint
+    if (typeof window !== "undefined") {
+      try {
+        const cached = window.localStorage.getItem("classmate_assistants")
+        if (cached) {
+          const parsed = JSON.parse(cached) as Assistant[]
+          if (Array.isArray(parsed)) {
+            setAssistants(parsed)
+            setIsLoading(false)
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to read assistants cache:", err)
+      }
+    }
+
     async function loadAssistants() {
       try {
-        setIsLoading(true)
         const { data, error } = await supabaseClient
           .from("assistants")
           .select("*")
@@ -130,6 +145,13 @@ export default function AssistantsPage() {
         }
 
         setAssistants(data as Assistant[])
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem("classmate_assistants", JSON.stringify(data))
+          } catch (err) {
+            console.warn("Failed to write assistants cache:", err)
+          }
+        }
       } finally {
         setIsLoading(false)
       }

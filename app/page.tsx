@@ -36,7 +36,7 @@ export default function LandingPage() {
                     Get Started <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="#how-it-works">
+                <Link href="/#how-it-works">
                   <Button variant="outline" size="lg" className="w-full sm:w-auto text-base h-12 px-8 bg-transparent">
                     See How It Works
                   </Button>
