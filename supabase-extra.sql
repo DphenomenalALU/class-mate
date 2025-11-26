@@ -6,6 +6,12 @@ alter table public.assistants
   add column if not exists system_prompt text,
   add column if not exists context text;
 
+-- 1b) Store richer profile information for auth users
+alter table public.profiles
+  add column if not exists email text,
+  add column if not exists first_name text,
+  add column if not exists last_name text;
+
 -- 2) Allow students to insert their own sessions
 drop policy if exists "Students can insert their sessions" on public.sessions;
 

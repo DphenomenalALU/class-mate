@@ -15,10 +15,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     const next = searchParams.get("next") || "/student"
-    if (!loading && currentUser && currentUser.role) {
+    if (currentUser?.role === "facilitator") {
+      router.push("/dashboard")
+    } else if (currentUser?.role === "student") {
       router.push(next)
     }
-  }, [currentUser, loading, router, searchParams])
+  }, [currentUser, router, searchParams])
 
   async function handleSignInWithGoogle() {
     const next = searchParams.get("next") || "/student"
@@ -37,14 +39,6 @@ export default function LoginPage() {
 
   async function handleSignOut() {
     await supabaseClient.auth.signOut()
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </div>
-    )
   }
 
   if (currentUser) {

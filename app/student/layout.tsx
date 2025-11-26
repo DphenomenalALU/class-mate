@@ -2,8 +2,9 @@ import type React from "react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import { GraduationCap, LayoutDashboard, Video, BookOpen, LogOut } from "lucide-react"
+import { GraduationCap, LayoutDashboard, Video, BookOpen } from "lucide-react"
 import { UserGate } from "@/components/auth/UserGate"
+import { SignOutButton } from "@/components/auth/SignOutButton"
 
 export default function StudentLayout({
   children,
@@ -48,12 +49,7 @@ export default function StudentLayout({
           </nav>
         </div>
         <div className="border-t p-4">
-          <Link href="/">
-            <Button variant="outline" className="w-full justify-start gap-2 bg-transparent" size="sm">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </Link>
+          <SignOutButton />
         </div>
       </aside>
 

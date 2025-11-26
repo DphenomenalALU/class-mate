@@ -2,8 +2,9 @@ import type React from "react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import { GraduationCap, LayoutDashboard, Bot, BookOpen, FileText, BarChart3, AlertTriangle, LogOut } from "lucide-react"
+import { GraduationCap, LayoutDashboard, Bot, BookOpen, FileText, BarChart3, AlertTriangle } from "lucide-react"
 import { UserGate } from "@/components/auth/UserGate"
+import { SignOutButton } from "@/components/auth/SignOutButton"
 
 export default function DashboardLayout({
   children,
@@ -53,13 +54,6 @@ export default function DashboardLayout({
               Notes
             </Link>
             <Link
-              href="/dashboard/analytics"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </Link>
-            <Link
               href="/dashboard/escalations"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
@@ -69,12 +63,7 @@ export default function DashboardLayout({
           </nav>
         </div>
         <div className="border-t p-4">
-          <Link href="/">
-            <Button variant="outline" className="w-full justify-start gap-2 bg-transparent" size="sm">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </Link>
+          <SignOutButton />
         </div>
       </aside>
 

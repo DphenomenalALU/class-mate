@@ -13,6 +13,7 @@ import { useLocalCamera } from "@/app/components/cvi/hooks/use-local-camera"
 import { useBrowserMediaPermissions } from "@/hooks/use-browser-media-permissions"
 import { supabaseClient } from "@/lib/supabase-client"
 import { useAuth } from "@/hooks/use-auth"
+import { Textarea } from "@/components/ui/textarea"
 
 function SessionContent() {
   const router = useRouter()
@@ -23,6 +24,9 @@ function SessionContent() {
   const [error, setError] = useState<string | null>(null)
   const [assistantId, setAssistantId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [wasEscalated, setWasEscalated] = useState(false)
+  const [escalationSubmitting, setEscalationSubmitting] = useState(false)
+  const [escalationNote, setEscalationNote] = useState("")
 
   const { isMicMuted, onToggleMicrophone } = useLocalMicrophone()
   const { isCamMuted, onToggleCamera } = useLocalCamera()
@@ -113,10 +117,11 @@ function SessionContent() {
 
   function handleEndSession() {
     if (sessionId) {
+      const newStatus = wasEscalated ? "escalated" : "completed"
       supabaseClient
         .from("sessions")
         .update({
-          status: "completed",
+          status: newStatus,
           ended_at: new Date().toISOString(),
         })
         .eq("id", sessionId)
@@ -145,6 +150,42 @@ function SessionContent() {
       })
     }
     router.push("/student")
+  }
+
+  async function handleConfirmEscalation() {
+    if (!assistantId || !sessionId) {
+      setShowEscalation(false)
+      return
+    }
+
+    try {
+      setEscalationSubmitting(true)
+      const response = await fetch("/api/escalations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId,
+          sessionId,
+          source: "student",
+          reason:
+            escalationNote.trim() ||
+            "Student requested escalation from live session.",
+        }),
+      })
+
+      if (!response.ok) {
+        console.error("Failed to create escalation")
+        return
+      }
+
+      setWasEscalated(true)
+      setShowEscalation(false)
+      handleHangUp()
+    } finally {
+      setEscalationSubmitting(false)
+    }
   }
 
   return (
@@ -197,9 +238,26 @@ function SessionContent() {
               <p className="text-sm text-zinc-300">
                 Your question will be sent to your facilitator for review. They will follow up with you via email.
               </p>
+              <div className="space-y-2">
+                <p className="text-xs text-zinc-400">
+                  Add a short note to help your facilitator understand what you need help with.
+                </p>
+                <Textarea
+                  rows={3}
+                  placeholder="E.g., I think my grade for Assignment 3 is wrong because..."
+                  value={escalationNote}
+                  onChange={(e) => setEscalationNote(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700"
+                />
+              </div>
               <div className="flex gap-2">
-                <Button variant="destructive" className="flex-1">
-                  Confirm Escalation
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleConfirmEscalation}
+                  disabled={escalationSubmitting}
+                >
+                  {escalationSubmitting ? "Escalating..." : "Confirm Escalation"}
                 </Button>
                 <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowEscalation(false)}>
                   Cancel

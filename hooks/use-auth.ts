@@ -17,32 +17,79 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true
 
+    async function ensureProfile(user: User) {
+      try {
+        const fullName =
+          (user.user_metadata?.full_name as string | undefined) ||
+          [user.user_metadata?.given_name, user.user_metadata?.family_name]
+            .filter(Boolean)
+            .join(" ") ||
+          null
+
+        const firstName = (user.user_metadata?.given_name as string | undefined) || null
+        const lastName = (user.user_metadata?.family_name as string | undefined) || null
+
+        await supabaseClient
+          .from("profiles")
+          .upsert(
+            {
+              id: user.id,
+              email: user.email,
+              full_name: fullName,
+              first_name: firstName,
+              last_name: lastName,
+            },
+            { onConflict: "id" },
+          )
+      } catch (err) {
+        console.error("Failed to ensure profile:", err)
+      }
+    }
+
     async function load() {
-      setLoading(true)
+      try {
+        setLoading(true)
 
-      const { data } = await supabaseClient.auth.getUser()
-      const user = data.user
+        const { data, error } = await supabaseClient.auth.getUser()
+        if (error) {
+          console.error("Error getting current user:", error)
+        }
 
-      if (!user) {
+        const user = data?.user ?? null
+
+        if (!user) {
+          if (mounted) {
+            setCurrentUser(null)
+            setLoading(false)
+          }
+          return
+        }
+
+        await ensureProfile(user)
+
+        const { data: profile, error: profileError } = await supabaseClient
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single()
+
+        if (profileError) {
+          console.error("Error loading profile:", profileError)
+        }
+
+        if (mounted) {
+          setCurrentUser({
+            user,
+            role: (profile?.role as "student" | "facilitator" | null) ?? null,
+          })
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error("Unexpected auth load error:", err)
         if (mounted) {
           setCurrentUser(null)
           setLoading(false)
         }
-        return
-      }
-
-      const { data: profile } = await supabaseClient
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
-
-      if (mounted) {
-        setCurrentUser({
-          user,
-          role: (profile?.role as "student" | "facilitator" | null) ?? null,
-        })
-        setLoading(false)
       }
     }
 
@@ -54,6 +101,8 @@ export function useAuth() {
           setCurrentUser(null)
           return
         }
+        await ensureProfile(session.user)
+
         const { data: profile } = await supabaseClient
           .from("profiles")
           .select("role")
@@ -75,4 +124,3 @@ export function useAuth() {
 
   return { currentUser, loading }
 }
-

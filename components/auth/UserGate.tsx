@@ -14,11 +14,8 @@ export function UserGate({ children, allowRoles }: Props) {
   const { currentUser, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Checking your session…</p>
-      </div>
-    )
+    // While auth is loading, render nothing to avoid jarring UI text.
+    return null
   }
 
   if (!currentUser) {
@@ -52,4 +49,3 @@ export function UserGate({ children, allowRoles }: Props) {
 
   return <>{children}</>
 }
-

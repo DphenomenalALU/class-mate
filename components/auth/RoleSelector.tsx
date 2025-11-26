@@ -41,8 +41,7 @@ export function RoleSelector({ next }: { next?: string }) {
     <div className="space-y-6 text-center">
       <h2 className="text-2xl font-semibold">Tell us who you are</h2>
       <p className="text-sm text-muted-foreground max-w-md mx-auto">
-        Choose whether you&apos;re signing in as a student or a facilitator. You can change this later in Supabase if
-        needed.
+        Choose whether you&apos;re signing in as a student or a facilitator.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button

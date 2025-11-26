@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     const courseName = body?.courseName as string | undefined
     const personaId = body?.personaId as string | undefined
     const replicaId = body?.replicaId as string | undefined
+    const createdBy = body?.createdBy as string | undefined
 
     if (!courseCode || !courseName || !personaId || !replicaId) {
       return NextResponse.json(
@@ -44,6 +45,7 @@ It should focus on helping students understand course concepts, clarify syllabus
         is_active: true,
         system_prompt: systemPrompt,
         context,
+        created_by: createdBy ?? null,
       })
       .select()
       .single()
@@ -74,4 +76,3 @@ It should focus on helping students understand course concepts, clarify syllabus
     )
   }
 }
-

@@ -1,14 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Settings, Trash2 } from "lucide-react"
-
+import Link from "next/link"
+import { Plus, Settings, Trash2, Link as LinkIcon } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabaseClient } from "@/lib/supabase-client"
+import { useAuth } from "@/hooks/use-auth"
 
 type Assistant = {
   id: string
@@ -111,6 +112,7 @@ export default function AssistantsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { currentUser } = useAuth()
 
   useEffect(() => {
     async function loadAssistants() {
@@ -137,7 +139,7 @@ export default function AssistantsPage() {
   }, [])
 
   async function handleCreateAssistant() {
-    if (!courseCode || !courseName || !selectedReplica) return
+    if (!courseCode || !courseName || !selectedReplica || !currentUser?.user?.id) return
 
     const stock = STOCK_REPLICAS.find((r) => r.id === selectedReplica)
     if (!stock) return
@@ -156,6 +158,7 @@ export default function AssistantsPage() {
           courseName,
           personaId: stock.personaId,
           replicaId: stock.replicaId,
+          createdBy: currentUser.user.id,
         }),
       })
 
@@ -275,9 +278,11 @@ export default function AssistantsPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                    <Link href={`/dashboard/assistants/${assistant.id}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -302,6 +307,24 @@ export default function AssistantsPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Status</span>
                     <span className="font-medium">{assistant.is_active ? "Active" : "Inactive"}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-muted-foreground text-xs">Share link</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 gap-1"
+                      onClick={() => {
+                        const origin = typeof window !== "undefined" ? window.location.origin : ""
+                        const url = `${origin}/assistant/${assistant.id}`
+                        navigator.clipboard
+                          .writeText(url)
+                          .catch((err) => console.error("Failed to copy link", err))
+                      }}
+                    >
+                      <LinkIcon className="h-3 w-3" />
+                      <span className="text-xs">Copy</span>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
