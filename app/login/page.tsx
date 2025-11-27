@@ -93,17 +93,9 @@ export default function LoginPage() {
       )
     }
 
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-4 text-center">
-          <h1 className="text-2xl font-semibold">You are signed in</h1>
-          <p className="text-sm text-muted-foreground">
-            Use the navigation to access the student or facilitator dashboards.
-          </p>
-          <Button onClick={handleSignOut}>Sign Out</Button>
-        </div>
-      </div>
-    )
+    // If a session and role are present, the effect above will redirect
+    // the user to the appropriate dashboard. Avoid rendering extra UI.
+    return null
   }
 
   return (

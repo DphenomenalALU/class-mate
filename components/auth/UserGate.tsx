@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
@@ -12,26 +14,26 @@ type Props = {
 
 export function UserGate({ children, allowRoles }: Props) {
   const { currentUser, loading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // If there is no active session, redirect to login with ?next
+  useEffect(() => {
+    if (loading) return
+    if (currentUser) return
+
+    const next = pathname || "/"
+    router.replace(`/login?next=${encodeURIComponent(next)}`)
+  }, [currentUser, loading, pathname, router])
 
   if (loading) {
-    // While auth is loading, render nothing to avoid jarring UI text.
+    // Briefly render nothing while we determine auth state.
     return null
   }
 
   if (!currentUser) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="space-y-4 text-center">
-          <h1 className="text-2xl font-semibold">Sign in to continue</h1>
-          <p className="text-sm text-muted-foreground">
-            You need to be signed in to access this area.
-          </p>
-          <Link href="/login">
-            <Button>Go to Login</Button>
-          </Link>
-        </div>
-      </div>
-    )
+    // Redirect is in progress; avoid flashing extra UI.
+    return null
   }
 
   if (allowRoles && !allowRoles.includes(currentUser.role ?? "student")) {

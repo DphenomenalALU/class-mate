@@ -116,6 +116,11 @@ export default function AssistantsPage() {
   const [copiedAssistantId, setCopiedAssistantId] = useState<string | null>(null)
   const { currentUser } = useAuth()
 
+  const canCreate =
+    !!courseCode.trim() &&
+    !!courseName.trim() &&
+    !!selectedReplica
+
   useEffect(() => {
     // Try to hydrate from localStorage cache for faster initial paint
     if (typeof window !== "undefined") {
@@ -163,7 +168,10 @@ export default function AssistantsPage() {
   }, [])
 
   async function handleCreateAssistant() {
-    if (!courseCode || !courseName || !selectedReplica || !currentUser?.user?.id) return
+    if (!canCreate) {
+      setError("Please fill in course code, course name, and select a replica before creating an assistant.")
+      return
+    }
 
     const stock = STOCK_REPLICAS.find((r) => r.id === selectedReplica)
     if (!stock) return
@@ -182,7 +190,7 @@ export default function AssistantsPage() {
           courseName,
           personaId: stock.personaId,
           replicaId: stock.replicaId,
-          createdBy: currentUser.user.id,
+          createdBy: currentUser?.user?.id,
         }),
       })
 
@@ -197,6 +205,7 @@ export default function AssistantsPage() {
       setCourseCode("")
       setCourseName("")
       setSelectedReplica("")
+      setError(null)
     } finally {
       setIsSaving(false)
     }
@@ -294,7 +303,7 @@ export default function AssistantsPage() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleCreateAssistant} disabled={isSaving}>
+              <Button onClick={handleCreateAssistant} disabled={isSaving || !canCreate}>
                 {isSaving ? "Creating..." : "Create Assistant"}
               </Button>
               <Button variant="outline" onClick={() => setShowCreateForm(false)}>

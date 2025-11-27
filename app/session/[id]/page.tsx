@@ -28,6 +28,8 @@ function SessionContent() {
   const [wasEscalated, setWasEscalated] = useState(false)
   const [escalationSubmitting, setEscalationSubmitting] = useState(false)
   const [escalationNote, setEscalationNote] = useState("")
+  const [sessionStartedAt, setSessionStartedAt] = useState<Date | null>(null)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const daily = useDaily()
   const [showRating, setShowRating] = useState(false)
   const [rating, setRating] = useState<number | null>(null)
@@ -72,7 +74,7 @@ function SessionContent() {
           status: "active",
           started_at: new Date().toISOString(),
         })
-        .select()
+        .select("id, started_at")
         .single()
 
       if (error) {
@@ -80,7 +82,9 @@ function SessionContent() {
         return
       }
 
-      setSessionId((data as { id: string }).id)
+      const inserted = data as { id: string; started_at: string }
+      setSessionId(inserted.id)
+      setSessionStartedAt(new Date(inserted.started_at))
     }
 
     ensureSession()
@@ -91,6 +95,20 @@ function SessionContent() {
       requestPermissions()
     }
   }, [conversationUrl, requestPermissions])
+
+  useEffect(() => {
+    if (!sessionStartedAt) return
+
+    const updateElapsed = () => {
+      const diffMs = Date.now() - sessionStartedAt.getTime()
+      const seconds = Math.max(0, Math.floor(diffMs / 1000))
+      setElapsedSeconds(seconds)
+    }
+
+    updateElapsed()
+    const interval = setInterval(updateElapsed, 1000)
+    return () => clearInterval(interval)
+  }, [sessionStartedAt])
 
   useEffect(() => {
     if (!daily) return
@@ -254,6 +272,21 @@ function SessionContent() {
     }
   }
 
+  function formatDuration(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+
+    const mm = minutes.toString().padStart(2, "0")
+    const ss = seconds.toString().padStart(2, "0")
+
+    if (hours > 0) {
+      const hh = hours.toString().padStart(2, "0")
+      return `${hh}:${mm}:${ss}`
+    }
+    return `${mm}:${ss}`
+  }
+
   return (
     <div className="fixed inset-0 bg-zinc-950 flex flex-col text-white overflow-hidden">
       {/* Header */}
@@ -262,7 +295,9 @@ function SessionContent() {
           <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
           <span className="font-medium text-sm">Live Session: CS101 - Introduction to Programming</span>
         </div>
-        <div className="text-sm font-mono opacity-70">00:12:45</div>
+        <div className="text-sm font-mono opacity-70">
+          {formatDuration(elapsedSeconds)}
+        </div>
       </header>
 
       {/* Main Video Area (AI Assistant) */}

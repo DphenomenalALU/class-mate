@@ -10,7 +10,10 @@ export async function POST(request: Request) {
 
     const courseCode = body?.courseCode as string | undefined
     const courseName = body?.courseName as string | undefined
-    const personaId = body?.personaId as string | undefined
+    // Prefer a configured default persona ID so we don't depend on
+    // stock persona IDs that might not exist for a given Tavus account.
+    const defaultPersonaId = (process.env.TAVUS_DEFAULT_PERSONA_ID as string | undefined) || "p88964a7"
+    const personaId = (defaultPersonaId || body?.personaId) as string | undefined
     const replicaId = body?.replicaId as string | undefined
     const createdBy = body?.createdBy as string | undefined
 

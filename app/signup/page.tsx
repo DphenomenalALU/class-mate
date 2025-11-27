@@ -1,15 +1,32 @@
-'use client'
+"use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { GraduationCap } from "lucide-react"
 import { supabaseClient } from "@/lib/supabase-client"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function SignupPage() {
   const [role, setRole] = useState<"student" | "facilitator">("student")
+  const { currentUser, loading } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // If a session is already active, redirect away from signup.
+  useEffect(() => {
+    if (loading || !currentUser) return
+
+    const nextParam = searchParams.get("next")
+    const defaultNext = currentUser.role === "facilitator" ? "/dashboard" : "/student"
+    const next = nextParam || defaultNext
+
+    router.replace(next)
+  }, [currentUser, loading, router, searchParams])
 
   async function handleSignUp() {
     const defaultNext = role === "facilitator" ? "/dashboard" : "/student"
@@ -25,6 +42,12 @@ export default function SignupPage() {
         redirectTo,
       },
     })
+  }
+
+  if (loading || currentUser?.role) {
+    // If auth is still loading or a fully-configured session exists,
+    // avoid showing the signup UI (redirect effect will handle it).
+    return null
   }
 
   return (

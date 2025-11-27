@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { supabaseClient } from "@/lib/supabase-client"
+import { useAuth } from "@/hooks/use-auth"
 
 type Assistant = {
   id: string
@@ -36,6 +37,7 @@ const BUCKET = "course-materials"
 
 export default function AssistantDetailPage() {
   const params = useParams<{ id: string }>()
+  const { currentUser, loading } = useAuth()
   const [assistant, setAssistant] = useState<Assistant | null>(null)
   const [documents, setDocuments] = useState<AssistantDocument[]>([])
   const [notes, setNotes] = useState<AssistantNote[]>([])
@@ -46,35 +48,48 @@ export default function AssistantDetailPage() {
 
   useEffect(() => {
     async function load() {
-      if (!params?.id) return
+      if (!params?.id || loading || !currentUser) return
 
-      const { data: assistantData } = await supabaseClient
+      const { data: assistantData, error: assistantError } = await supabaseClient
         .from("assistants")
         .select("id, course_code, name")
         .eq("id", params.id)
         .single()
 
+      if (assistantError) {
+        console.error("Error loading assistant:", assistantError)
+        setError("We couldn't load this assistant. Please refresh or check your permissions.")
+        setAssistant(null)
+        return
+      }
+
       setAssistant((assistantData || null) as Assistant | null)
 
-      const { data: docsData } = await supabaseClient
+      const { data: docsData, error: docsError } = await supabaseClient
         .from("assistant_documents")
         .select("*")
         .eq("assistant_id", params.id)
         .order("created_at", { ascending: false })
 
+      if (docsError) {
+        console.error("Error loading assistant documents:", docsError)
+      }
       setDocuments((docsData || []) as AssistantDocument[])
 
-      const { data: notesData } = await supabaseClient
+      const { data: notesData, error: notesError } = await supabaseClient
         .from("assistant_notes")
         .select("*")
         .eq("assistant_id", params.id)
         .order("created_at", { ascending: false })
 
+      if (notesError) {
+        console.error("Error loading assistant notes:", notesError)
+      }
       setNotes((notesData || []) as AssistantNote[])
     }
 
     load()
-  }, [params?.id])
+  }, [params?.id, loading, currentUser])
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -172,10 +187,18 @@ export default function AssistantDetailPage() {
     }
   }
 
-  if (!assistant) {
+  if (loading || (!assistant && !error)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-muted-foreground">Loading assistant…</p>
+      </div>
+    )
+  }
+
+  if (!assistant && error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-destructive">{error}</p>
       </div>
     )
   }
@@ -306,4 +329,3 @@ export default function AssistantDetailPage() {
     </div>
   )
 }
-

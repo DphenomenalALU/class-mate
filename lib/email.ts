@@ -55,9 +55,12 @@ export async function sendEscalationEmail(
     "You can review this escalation in your ClassMate dashboard and follow up with the student.",
   ].filter(Boolean)
 
-  const client = new Resend(apiKey)
+  // Prefer a per-facilitator client if a custom key was provided,
+  // otherwise fall back to the shared client.
+  const client = settings?.resendApiKey ? new Resend(apiKey) : resend
+  if (!client) return
 
-  await resend.emails.send({
+  await client.emails.send({
     from: fromEmail,
     to: facilitatorEmail,
     reply_to: params.studentEmail,
