@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { GraduationCap, LayoutDashboard, Bot, BookOpen, FileText, AlertTriangle, ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { UserGate } from "@/components/auth/UserGate"
 import { SignOutButton } from "@/components/auth/SignOutButton"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function DashboardLayout({
   children,
@@ -24,21 +25,24 @@ export default function DashboardLayout({
           collapsed ? "w-16" : "w-56"
         }`}
       >
-        <div className="flex h-16 items-center border-b px-4 justify-between">
+        <div className="flex h-16 items-center border-b px-4 justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
               <GraduationCap className="h-4 w-4" />
             </div>
             {!collapsed && <span>ClassMate</span>}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {!collapsed && <ThemeToggle />}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCollapsed((v) => !v)}
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto py-4">
           <nav className="grid gap-1 px-2 text-sm font-medium">
@@ -63,7 +67,7 @@ export default function DashboardLayout({
           </nav>
         </div>
         <div className="border-t p-3">
-          <SignOutButton />
+          <SignOutButton compact={collapsed} />
         </div>
       </aside>
 

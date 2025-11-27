@@ -45,16 +45,13 @@ export default function StudentLayout({
             <SidebarLink href="/student" collapsed={collapsed} icon={<LayoutDashboard className="h-4 w-4" />}>
               Dashboard
             </SidebarLink>
-            <SidebarLink href="/student/assistants" collapsed={collapsed} icon={<Video className="h-4 w-4" />}>
-              My Assistants
-            </SidebarLink>
             <SidebarLink href="/student/history" collapsed={collapsed} icon={<BookOpen className="h-4 w-4" />}>
               Session History
             </SidebarLink>
           </nav>
         </div>
         <div className="border-t p-3">
-          <SignOutButton />
+          <SignOutButton compact={collapsed} />
         </div>
       </aside>
 

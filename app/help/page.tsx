@@ -9,8 +9,8 @@ export default function HelpPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">
-        <div className="space-y-8 max-w-3xl mx-auto px-6 md:px-8 py-12 md:py-16">
+      <main className="flex-1 px-6 md:px-8 lg:px-12">
+        <div className="space-y-8 max-w-3xl mx-auto py-12 md:py-16">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">ClassMate Help & Quick Start</h1>
             <p className="text-sm text-muted-foreground">

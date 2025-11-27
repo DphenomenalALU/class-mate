@@ -4,54 +4,54 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Dark theme by default for this brand */
-  --background: oklch(0.1 0 0); /* Deep black/gray */
-  --foreground: oklch(0.985 0 0); /* White */
+  /* Light theme */
+  --background: oklch(0.985 0 0); /* White */
+  --foreground: oklch(0.18 0 0); /* Dark text */
 
-  --card: oklch(0.15 0 0); /* Slightly lighter black */
-  --card-foreground: oklch(0.985 0 0);
+  --card: oklch(0.97 0 0);
+  --card-foreground: oklch(0.18 0 0);
 
-  --popover: oklch(0.12 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.98 0 0);
+  --popover-foreground: oklch(0.18 0 0);
 
-  --primary: oklch(0.6 0.25 270); /* Vibrant Purple/Violet */
+  --primary: oklch(0.6 0.25 270); /* Same brand violet */
   --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.2 0 0); /* Dark gray */
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.28 0 0);
 
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.7 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.55 0 0);
 
-  --accent: oklch(0.25 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.28 0 0);
 
-  --destructive: oklch(0.396 0.141 25.723);
+  --destructive: oklch(0.62 0.16 25.7);
   --destructive-foreground: oklch(0.985 0 0);
 
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.2 0 0);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
   --ring: oklch(0.6 0.25 270);
 
   --radius: 0.5rem;
 
   --chart-1: oklch(0.6 0.25 270);
-  --chart-2: oklch(0.5 0.2 250);
-  --chart-3: oklch(0.4 0.15 230);
-  --chart-4: oklch(0.7 0.2 290);
-  --chart-5: oklch(0.8 0.1 310);
+  --chart-2: oklch(0.6 0.18 210);
+  --chart-3: oklch(0.7 0.18 150);
+  --chart-4: oklch(0.7 0.2 90);
+  --chart-5: oklch(0.65 0.16 30);
 
-  --sidebar: oklch(0.12 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: oklch(0.97 0 0);
+  --sidebar-foreground: oklch(0.18 0 0);
   --sidebar-primary: oklch(0.6 0.25 270);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.2 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.2 0 0);
+  --sidebar-accent: oklch(0.94 0 0);
+  --sidebar-accent-foreground: oklch(0.28 0 0);
+  --sidebar-border: oklch(0.9 0 0);
   --sidebar-ring: oklch(0.6 0.25 270);
 }
 
-/* Ensure dark mode vars match root since we want a dark-first app */
+/* Dark mode keeps the existing look */
 .dark {
   --background: oklch(0.1 0 0);
   --foreground: oklch(0.985 0 0);
@@ -131,6 +131,9 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html {
+    @apply max-w-full overflow-x-hidden;
   }
   body {
     @apply bg-background text-foreground;

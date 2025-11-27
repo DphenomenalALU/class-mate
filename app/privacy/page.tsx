@@ -6,12 +6,13 @@ export default function PrivacyPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main className="flex-1 container max-w-4xl px-6 md:px-8 py-12 md:py-16">
-        <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString()}</p>
+      <main className="flex-1 px-6 md:px-8 lg:px-12">
+        <div className="container max-w-4xl py-12 md:py-16">
+          <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+          <p className="text-sm text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString()}</p>
 
-        <div className="prose prose-neutral dark:prose-invert max-w-none">
-          <section className="mb-8">
+          <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
             <p className="text-muted-foreground leading-relaxed">
               ClassMate is committed to protecting the privacy of students and facilitators using our AI-powered
@@ -111,6 +112,7 @@ export default function PrivacyPage() {
               course facilitator or reach out to African Leadership University's IT administration.
             </p>
           </section>
+          </div>
         </div>
       </main>
 

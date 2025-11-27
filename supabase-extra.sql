@@ -31,6 +31,29 @@ create policy "Settings are manageable by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Facilitators can manage assistants" on public.assistants;
+
+-- Any authenticated user can view assistants
+create policy "Assistants viewable to authenticated users"
+  on public.assistants for select
+  using (auth.uid() is not null);
+
+-- Only facilitators can manage assistants (all ops)
+create policy "Facilitators can manage assistants"
+  on public.assistants for all
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role = 'facilitator'
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role = 'facilitator'
+    )
+  );
+
 -- 2) Allow students to insert their own sessions
 drop policy if exists "Students can insert their sessions" on public.sessions;
 

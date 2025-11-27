@@ -8,13 +8,13 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 px-6 md:px-8 lg:px-12">
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 lg:py-40 overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-[310px] w-[310px] rounded-full bg-primary/20 opacity-20 blur-[100px]"></div>
 
-          <div className="container px-6 md:px-8 relative z-10">
+          <div className="container relative z-10">
             <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center">
               <div className="inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm text-muted-foreground backdrop-blur-sm">
                 <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
@@ -48,7 +48,7 @@ export default function LandingPage() {
 
         {/* Features Grid */}
         <section id="features" className="py-20 bg-muted/30">
-          <div className="container px-6 md:px-8">
+          <div className="container">
             <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Why Choose ClassMate?</h2>
               <p className="text-muted-foreground max-w-[700px] md:text-lg">
@@ -102,7 +102,7 @@ export default function LandingPage() {
         </section>
 
         <section id="how-it-works" className="py-20 md:py-32 border-t">
-          <div className="container px-6 md:px-8">
+          <div className="container">
             <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">How It Works</h2>
               <p className="text-muted-foreground max-w-[700px] md:text-lg">
@@ -161,7 +161,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="py-20 md:py-32 border-t bg-gradient-to-b from-background to-muted/30">
-          <div className="container px-6 md:px-8">
+          <div className="container">
             <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
                 Ready to Get Instant Academic Support?

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { currentUser, loading } = useAuth()
+  const [isSettingRole, setIsSettingRole] = useState(false)
 
   useEffect(() => {
     const next = searchParams.get("next") || "/student"
@@ -21,6 +22,36 @@ export default function LoginPage() {
       router.push(next)
     }
   }, [currentUser, router, searchParams])
+
+  // Handle automatic role assignment coming from signup (role passed as query param)
+  useEffect(() => {
+    async function applyPreferredRole() {
+      if (!currentUser || currentUser.role || isSettingRole) return
+
+      const preferredRole = searchParams.get("role")
+      if (preferredRole !== "student" && preferredRole !== "facilitator") return
+
+      try {
+        setIsSettingRole(true)
+        await supabaseClient
+          .from("profiles")
+          .upsert(
+            {
+              id: currentUser.user.id,
+              role: preferredRole,
+            },
+            { onConflict: "id" },
+          )
+
+        const next = searchParams.get("next") || (preferredRole === "facilitator" ? "/dashboard" : "/student")
+        router.push(next)
+      } finally {
+        setIsSettingRole(false)
+      }
+    }
+
+    applyPreferredRole()
+  }, [currentUser, isSettingRole, router, searchParams])
 
   async function handleSignInWithGoogle() {
     const next = searchParams.get("next") || "/student"
@@ -43,6 +74,18 @@ export default function LoginPage() {
 
   if (currentUser) {
     if (!currentUser.role) {
+      const preferredRole = searchParams.get("role")
+
+      // Coming from signup with a chosen role: show a simple loading state
+      if (preferredRole === "student" || preferredRole === "facilitator") {
+        return (
+          <div className="flex min-h-screen items-center justify-center">
+            <p className="text-sm text-muted-foreground">Setting up your account…</p>
+          </div>
+        )
+      }
+
+      // Fallback for users who hit login directly without a preset role
       return (
         <div className="flex min-h-screen items-center justify-center">
           <RoleSelector next={searchParams.get("next") || undefined} />

@@ -25,10 +25,13 @@ export default function AssistantEntryPage() {
 
   const [assistant, setAssistant] = useState<Assistant | null>(null)
   const [joining, setJoining] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadAssistant() {
-      if (!params?.id) return
+      // Wait until we know the auth state. Unauthed users will be redirected
+      // below, so we only fetch the assistant once a session exists.
+      if (!params?.id || loading || !currentUser) return
 
       const { data, error } = await supabaseClient
         .from("assistants")
@@ -38,6 +41,7 @@ export default function AssistantEntryPage() {
 
       if (error) {
         console.error("Error loading assistant:", error)
+        setLoadError("This assistant link is invalid or no longer available. Please check with your facilitator.")
         return
       }
 
@@ -45,7 +49,7 @@ export default function AssistantEntryPage() {
     }
 
     loadAssistant()
-  }, [params?.id])
+  }, [params?.id, currentUser, loading])
 
   useEffect(() => {
     if (loading) return
@@ -92,6 +96,31 @@ export default function AssistantEntryPage() {
     }
   }
 
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Assistant Not Found</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>{loadError}</p>
+            <p>
+              You can return to your <span className="font-medium text-foreground">Student Dashboard</span> and start a
+              session from there.
+            </p>
+            <Button
+              className="w-full mt-2"
+              onClick={() => router.push("/student")}
+            >
+              Go to Student Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (!assistant) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -126,4 +155,3 @@ export default function AssistantEntryPage() {
     </div>
   )
 }
-

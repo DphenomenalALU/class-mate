@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus, Settings, Trash2, Link as LinkIcon } from "lucide-react"
+import { Plus, Settings, Trash2, Link as LinkIcon, Check } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabaseClient } from "@/lib/supabase-client"
 import { useAuth } from "@/hooks/use-auth"
+import { toast } from "@/components/ui/use-toast"
 
 type Assistant = {
   id: string
@@ -112,6 +113,7 @@ export default function AssistantsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [copiedAssistantId, setCopiedAssistantId] = useState<string | null>(null)
   const { currentUser } = useAuth()
 
   useEffect(() => {
@@ -208,6 +210,30 @@ export default function AssistantsPage() {
     if (error) {
       console.error("Error deleting assistant:", error)
       setAssistants(previous)
+    }
+  }
+
+  async function handleCopyLink(assistantId: string) {
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    const url = `${origin}/assistant/${assistantId}`
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedAssistantId(assistantId)
+      toast({
+        title: "Link copied",
+        description: "Assistant share link copied to your clipboard.",
+      })
+      setTimeout(() => {
+        setCopiedAssistantId((current) => (current === assistantId ? null : current))
+      }, 2000)
+    } catch (err) {
+      console.error("Failed to copy link", err)
+      toast({
+        variant: "destructive",
+        title: "Could not copy link",
+        description: "Please copy it manually.",
+      })
     }
   }
 
@@ -336,16 +362,16 @@ export default function AssistantsPage() {
                       variant="outline"
                       size="sm"
                       className="h-7 px-2 gap-1"
-                      onClick={() => {
-                        const origin = typeof window !== "undefined" ? window.location.origin : ""
-                        const url = `${origin}/assistant/${assistant.id}`
-                        navigator.clipboard
-                          .writeText(url)
-                          .catch((err) => console.error("Failed to copy link", err))
-                      }}
+                      onClick={() => handleCopyLink(assistant.id)}
                     >
-                      <LinkIcon className="h-3 w-3" />
-                      <span className="text-xs">Copy</span>
+                      {copiedAssistantId === assistant.id ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <LinkIcon className="h-3 w-3" />
+                      )}
+                      <span className="text-xs">
+                        {copiedAssistantId === assistant.id ? "Copied" : "Copy"}
+                      </span>
                     </Button>
                   </div>
                 </div>
