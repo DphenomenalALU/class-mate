@@ -34,21 +34,56 @@ export default function NotesPage() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: assistantsData } = await supabaseClient
+      const { data: assistantsData, error: assistantsError } = await supabaseClient
         .from("assistants")
         .select("id, course_code, name")
         .order("course_code")
 
-      const { data: notesData } = await supabaseClient
+      if (assistantsError) {
+        console.error("Error loading assistants for notes:", assistantsError)
+      }
+
+      const { data: notesData, error: notesError } = await supabaseClient
         .from("assistant_notes")
         .select("*")
         .order("created_at", { ascending: false })
 
-      setAssistants((assistantsData || []) as Assistant[])
+      if (notesError) {
+        console.error("Error loading notes:", notesError)
+      }
+
+      const assistantsList = (assistantsData || []) as Assistant[]
+      setAssistants(assistantsList)
       setNotes((notesData || []) as AssistantNote[])
 
-      if (assistantsData && assistantsData.length > 0 && !selectedAssistantId) {
-        setSelectedAssistantId(assistantsData[0].id)
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("classmate_assistants", JSON.stringify(assistantsList))
+        } catch (err) {
+          console.warn("Failed to write assistants cache:", err)
+        }
+      }
+
+      if (assistantsList.length > 0 && !selectedAssistantId) {
+        setSelectedAssistantId(assistantsList[0].id)
+      }
+    }
+
+    // Hydrate assistants from localStorage so the selector isn't empty while Supabase loads
+    if (typeof window !== "undefined") {
+      try {
+        const cached = window.localStorage.getItem("classmate_assistants")
+        if (cached) {
+          const parsed = JSON.parse(cached) as Assistant[]
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAssistants(parsed)
+            if (!selectedAssistantId) {
+              setSelectedAssistantId(parsed[0].id)
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to read assistants cache:", err)
       }
     }
 

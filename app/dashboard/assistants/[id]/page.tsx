@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { supabaseClient } from "@/lib/supabase-client"
-import { useAuth } from "@/hooks/use-auth"
 
 type Assistant = {
   id: string
@@ -37,7 +36,6 @@ const BUCKET = "course-materials"
 
 export default function AssistantDetailPage() {
   const params = useParams<{ id: string }>()
-  const { currentUser, loading } = useAuth()
   const [assistant, setAssistant] = useState<Assistant | null>(null)
   const [documents, setDocuments] = useState<AssistantDocument[]>([])
   const [notes, setNotes] = useState<AssistantNote[]>([])
@@ -48,7 +46,7 @@ export default function AssistantDetailPage() {
 
   useEffect(() => {
     async function load() {
-      if (!params?.id || loading || !currentUser) return
+      if (!params?.id) return
 
       const { data: assistantData, error: assistantError } = await supabaseClient
         .from("assistants")
@@ -89,7 +87,7 @@ export default function AssistantDetailPage() {
     }
 
     load()
-  }, [params?.id, loading, currentUser])
+  }, [params?.id])
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -187,7 +185,7 @@ export default function AssistantDetailPage() {
     }
   }
 
-  if (loading || (!assistant && !error)) {
+  if (!assistant && !error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-muted-foreground">Loading assistant…</p>

@@ -33,21 +33,6 @@ export default function KnowledgePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function loadData() {
-      const { data: assistantsData } = await supabaseClient
-        .from("assistants")
-        .select("id, course_code, name")
-        .order("course_code")
-
-      setAssistants((assistantsData || []) as Assistant[])
-
-      const initialAssistantId = assistantsData && assistantsData.length > 0 ? assistantsData[0].id : ""
-      if (initialAssistantId) {
-        setSelectedAssistantId(initialAssistantId)
-        await loadDocuments(initialAssistantId)
-      }
-    }
-
     async function loadDocuments(assistantId: string) {
       const { data: docsData } = await supabaseClient
         .from("assistant_documents")
@@ -56,6 +41,53 @@ export default function KnowledgePage() {
         .order("created_at", { ascending: false })
 
       setDocuments((docsData || []) as AssistantDocument[])
+    }
+
+    // First, try to hydrate assistants (and documents) from localStorage for faster initial paint
+    if (typeof window !== "undefined") {
+      try {
+        const cached = window.localStorage.getItem("classmate_assistants")
+        if (cached) {
+          const parsed = JSON.parse(cached) as Assistant[]
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAssistants(parsed)
+            const initialId = parsed[0].id
+            setSelectedAssistantId((current) => current || initialId)
+            loadDocuments(initialId)
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to read assistants cache:", err)
+      }
+    }
+
+    async function loadData() {
+      const { data: assistantsData, error: assistantsError } = await supabaseClient
+        .from("assistants")
+        .select("id, course_code, name")
+        .order("course_code")
+
+      if (assistantsError) {
+        console.error("Error loading assistants for knowledge base:", assistantsError)
+        return
+      }
+
+      const assistantsList = (assistantsData || []) as Assistant[]
+      setAssistants(assistantsList)
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("classmate_assistants", JSON.stringify(assistantsList))
+        } catch (err) {
+          console.warn("Failed to write assistants cache:", err)
+        }
+      }
+
+      const initialAssistantId = assistantsList.length > 0 ? assistantsList[0].id : ""
+      if (initialAssistantId) {
+        setSelectedAssistantId((current) => current || initialAssistantId)
+        await loadDocuments(initialAssistantId)
+      }
     }
 
     loadData()
